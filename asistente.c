@@ -5,7 +5,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-// Prototipos de funciones
 void buscarEnLinea(const char *parametros);
 void realizarCalculo(const char *parametros);
 void obtenerDatosClima(const char *parametros);
@@ -18,7 +17,7 @@ int main() {
     printf("Asistente Virtual - Comandos disponibles:\n");
     printf("  - Para buscar en línea: buscar <término de búsqueda>\n");
     printf("  - Para realizar cálculos: calcular <expresión matemática>\n");
-    printf("  - Para obtener datos climáticos: clima hoy|mañana <ciudad>\n");
+    printf("  - Para obtener datos climáticos: clima <ciudad>\n");
     printf("Ejemplos de comandos válidos:\n");
     printf("  - buscar gatos\n");
     printf("  - calcular 5 + 3\n");
@@ -49,7 +48,7 @@ int main() {
                 // Este es el proceso hijo
                 close(pipefd[0]); // Cerramos el extremo de lectura de la tubería
                 if (strcmp(comando, "buscar") == 0) {
-		    buscarEnLinea(parametros);
+		            buscarEnLinea(parametros);
                 } else if (strcmp(comando, "calcular") == 0) {
                     realizarCalculo(parametros);
                 } else if (strcmp(comando, "clima") == 0) {

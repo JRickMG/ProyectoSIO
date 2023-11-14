@@ -1,49 +1,46 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <curl/curl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
-size_t escribirRespuesta(void *contenido, size_t tamaño, size_t nmemb, void *usuario) {
-    size_t total_size = tamaño * nmemb;
-    char *respuesta = (char *)usuario;
-
-    strncat(respuesta, (char *)contenido, total_size);
-    return total_size;
+void mostrarAyudaGoogler() {
+    printf("\n---- Ayuda ----\n");
+    printf("  n, p                 Obtener los siguientes o anteriores resultados de búsqueda\n");
+    printf("  index                Abrir el resultado correspondiente al índice en el navegador\n");
+    printf("  f                    Ir a la primera página\n");
+    printf("  o [index|range|a ...] Abrir resultados separados por espacios, rangos numéricos\n");
+    printf("                       o 'a' para abrir todos, en el navegador\n");
+    printf("  O [index|range|a ...] Similar a 'o', pero intenta abrir en un navegador GUI\n");
+    printf("  g keywords           Nueva búsqueda de Google para 'keywords' con opciones originales\n");
+    printf("  c index              Copiar URL al portapapeles\n");
+    printf("  u                    Alternar expansión de URL\n");
+    printf("  q, ^D, doble Enter   Salir de Googler\n");
+    printf("  ?                    Mostrar ayuda de omniprompt\n");
+    printf("  *                    Otros comandos realizan una nueva búsqueda con opciones originales\n");
+    printf("\nPara cerrar la búsqueda en Googler, presiona 'q', ^D, o doble Enter.\n");
+    printf("---- Fin de la Ayuda ----\n\n");
 }
 
 void buscarEnLinea(const char *busqueda) {
-    CURL *curl;
-    CURLcode res;
+    char comando[256];
+    snprintf(comando, sizeof(comando), "googler %s", busqueda);
 
-    char url[256];
-    snprintf(url, sizeof(url), "https://www.google.com/search?q=%s", busqueda);
+    printf("Realizando búsqueda en línea: %s\n", comando);
 
-    curl = curl_easy_init();
-    if (curl) {
-        curl_easy_setopt(curl, CURLOPT_URL, url);
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0");
-
-        char respuesta[4096]; // Tamaño del buffer para la respuesta
-        memset(respuesta, 0, sizeof(respuesta)); // Inicializamos el buffer
-
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, respuesta);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, escribirRespuesta);
-
-        res = curl_easy_perform(curl);
-        if (res != CURLE_OK) {
-            fprintf(stderr, "Error en la solicitud HTTP: %s\n", curl_easy_strerror(res));
-        } else {
-            // Utiliza lynx para convertir la respuesta HTML a texto
-            FILE *pipe = popen("lynx -dump -stdin", "w");
-            if (pipe) {
-                fprintf(pipe, "%s", respuesta);
-                pclose(pipe);
-            }
+    // Ejecutar el comando y capturar la salida
+    FILE *pipe = popen(comando, "r");
+    if (pipe) {
+        mostrarAyudaGoogler();
+        char buffer[4096];
+        while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
+            printf("%s", buffer); // Imprimir cada línea de la salida
         }
-
-        curl_easy_cleanup(curl);
+        
+        pclose(pipe);
     } else {
-        fprintf(stderr, "Error al inicializar libcurl\n");
+        fprintf(stderr, "Error al ejecutar el comando\n");
     }
+    
 }
